@@ -5,46 +5,60 @@
 @endsection
 
 @section('style')
-<link rel="stylesheet" href="{{asset('css/cart.css')}}"> 
+<link rel="stylesheet" href="{{asset('css/cart.css')}}">
 @endsection
 
 @section('content')
 <div class="container">
     <!-- success message & Error message -->
-        {{-- @php
-            $total = 0;    
-        @endphp --}}
-    {{-- @if ($carts->count() == 0)
-    <p style="text-align:center;">Your Cart is Empty</p>
-    @else --}}
+    @if (Session::has('success'))
+        <div class="alert alert-success">
+            {{ Session::get('success') }}
+        </div>
+    @endif
+
+    @if (Session::has('error'))
+        <div class="alert alert-danger">
+            {{ Session::get('error') }}
+        </div>
+    @endif
+
+        @php
+            $total = 0;
+        @endphp
+
+    @if ($carts->count() == 0)
+        <p style="text-align: center;">Your Cart is Empty</p>
+    @endif
 <div>
-    <h3>1 Item in your cart</h3>
+    <h3>{{ $carts->count() }} Item(s) in your cart</h3>
 </div>
 
-<div class="cart">
+@foreach ($carts as $cart)
+    <div class="cart">
         <div class="row">
             <div class="col-lg-3">
             <img class="img-cart" src="{{asset('storage/images/product.jpg')}}" alt="">
             </div>
             <div class="col-lg-9">
                 <div class="top">
-                    <p class="item-name">Nama Produk</p>
+                    <p class="item-name">{{ $cart->product->name }}</p>
                     <div class="top-right">
-                        <p class="">Rp200000</p>
-                        <select name="qty" class="quantity" data-item="id-cartnya">
+                        <p class="">Rp. {{ number_format($cart->product->price) }}</p>
+                        <select name="qty" class="quantity" data-item="{{ $cart->id }}">
                         @for ($i = 1; $i <= 10; $i++)
-                            <option value="{{$i}}">{{$i}}</option>
+                            <option value="{{$i}}"{{ $cart->qty == $i ? 'selected': '' }}>{{$i}}</option>
                         @endfor
                         </select>
                         <!-- Subtotal -->
-                        <p class="total-item">RpSubtotal</p>
+                        <p class="total-item">Rp. {{ number_format($cart->product->price * $cart->qty) }}</p>
                     </div>
                 </div>
                 <hr class="mt-2 mb-2">
                 <div class="bottom">
-                   <div class="row">
+                    <div class="row">
                         <p class="col-lg-6 item-desc">
-                            Deskripsi
+                            {{ $cart->product->desc }}
                         </p>
                         <div class="offset-lg-4">
 
@@ -56,16 +70,17 @@
                                 <button type="submit" class="btn btn-danger">Remove</button>
                             </form>
                         </div>
-                   </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    {{-- @php
-    $total += ($cart->item->price * $cart->quantity);
-    @endphp --}}
+    @php
+    $total += ($cart->product->price * $cart->qty);
+    @endphp
+@endforeach
 <div class="totalz">
-    <h4 class="total-price">Total Price: Rp10000000</h4>
+    <h4 class="total-price">Total Price: Rp. {{ number_format($total) }}</h4>
 </div>
 </div>
 
@@ -84,13 +99,13 @@
     Array.from(classname).forEach(function(element){
      element.addEventListener('change', function(){
         const id = element.getAttribute('data-item');
-        axios.patch(``, {
+        axios.patch(`/cart/${id}`, {
             quantity: this.value,
             id: id
           })
           .then(function (response) {
             //console.log(response);
-            window.location.href = ''
+            window.location.href = '/cart'
           })
           .catch(function (error) {
             console.log(error);
