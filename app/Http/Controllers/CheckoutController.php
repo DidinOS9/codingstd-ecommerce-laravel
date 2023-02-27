@@ -3,16 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Cart;
+use App\Mail\CheckoutMail;
 use App\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class CheckoutController extends Controller
 {
+
+    public function __construct()
+    {
+     $this->middleware('auth');
+    }
+
     public function store()
     {
         $carts = Cart::where('user_id', Auth::user()->id);
-
         $cartUser = $carts->get();
 
         $transaction = Transaction::create([
@@ -25,7 +32,8 @@ class CheckoutController extends Controller
                 'qty' => $cart->qty
             ]);
 
-            $carts->delete();
+            Mail::to($carts->first()->user->email)->send(new CheckoutMail($cartUser));
+            Cart::where('user_id', Auth::user()->id)->delete();
             return redirect('/');
         }
     }
